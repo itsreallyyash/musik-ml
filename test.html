@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musik - Genre Prediction</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap">
+    <style>
+        /* Common styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.5s ease;
+            background-color: #fff; /* Default background color for light mode */
+            color: #000; /* Default text color for light mode */
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        form {
+            padding-top: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+            display: flex;
+            align-items: center; /* Align radio buttons vertically center */
+        }
+
+        input[type="text"],
+        input[type="number"] {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            transition: border-color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff; /* Default button color */
+            color: #fff; /* Default button text color */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3; /* Button color on hover */
+        }
+
+        .output {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .predicted-genre {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        /* Light mode */
+        .light-mode input[type="radio"] + label::before,
+        .light-mode input[type="submit"],
+        .light-mode input[type="submit"]:hover {
+            background: linear-gradient(to bottom, #ffffff, #ccf); /* Gradient for buttons */
+            color: #000; /* Text color for buttons */
+        }
+
+        /* Dark mode */
+        .dark-mode input[type="radio"] + label::before,
+        .dark-mode input[type="submit"],
+        .dark-mode input[type="submit"]:hover {
+            background: linear-gradient(to bottom, #222, #444); /* Gradient for buttons */
+            color: #fff; /* Text color for buttons */
+        }
+
+        /* Mode switch button */
+        .mode-switch {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #000; /* Default mode switch color */
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .mode-switch:hover {
+            color: #007bff; /* Mode switch color on hover */
+        }
+
+        .input-method-labels {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align labels to left */
+            margin-bottom: 10px;
+        }
+
+        .input-method-labels label {
+            margin-right: 10px;
+        }
+
+        input[type="radio"] {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body class="light-mode">
+    <button class="mode-switch" onclick="toggleMode()">🌙</button>
+    <div class="container">
+        <h1>Musik - Genre Prediction</h1>
+        <form id="predictionForm">
+            <div class="input-method-labels">
+                <label for="inputMethod">
+                    <input type="radio" id="spotifyInput" name="inputMethod" value="spotify" checked>
+                    Spotify Song Link
+                </label>
+                <label for="manualInput">
+                    <input type="radio" id="manualInput" name="inputMethod" value="manual">
+                    Manual Input
+                </label>
+            </div>
+
+            <div id="spotifyInputFields">
+                <label for="spotifyUrl">Spotify Song URL:</label>
+                <input type="text" id="spotifyUrl" name="spotifyUrl">
+            </div>
+
+            <div id="manualInputFields" style="display: none;">
+                <label for="danceability">Danceability:</label>
+                <input type="number" id="danceability" name="danceability" step="0.01" required>
+
+                <label for="energy">Energy:</label>
+                <input type="number" id="energy" name="energy" step="0.01" required>
+
+                <label for="acousticness">Acousticness:</label>
+                <input type="number" id="acousticness" name="acousticness" step="0.01" required>
+
+                <label for="instrumentalness">Instrumentalness:</label>
+                <input type="number" id="instrumentalness" name="instrumentalness" step="0.01" required>
+
+                <label for="tempo">Tempo:</label>
+                <input type="number" id="tempo" name="tempo" required>
+            </div>
+
+            <input type="submit" value="Predict Genre">
+        </form>
+
+        <div class="output">
+            <p class="predicted-genre" id="predictedGenre"></p>
+        </div>
+    </div>
+
+    <script>
+        function toggleMode() {
+            document.body.classList.toggle('dark-mode');
+        }
+
+        document.getElementById('predictionForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Extract input method
+            const inputMethod = document.querySelector('input[name="inputMethod"]:checked').value;
+
+            let inputData = {};
+            
+            if (inputMethod === 'spotify') {
+                // Extract Spotify URL
+                const spotifyUrl = document.getElementById('spotifyUrl').value;
+                inputData = { spotifyUrl: spotifyUrl };
+            } else {
+                // Extract manual input values
+                const danceability = parseFloat(document.getElementById('danceability').value);
+                const energy = parseFloat(document.getElementById('energy').value);
+                const acousticness = parseFloat(document.getElementById('acousticness').value);
+                const instrumentalness = parseFloat(document.getElementById('instrumentalness').value);
+                const tempo = parseFloat(document.getElementById('tempo').value);
+
+                inputData = {
+                    danceability: danceability,
+                    energy: energy,
+                    acousticness: acousticness,
+                    instrumentalness: instrumentalness,
+                    tempo: tempo
+                };
+            }
+
+            // Send POST request to Flask server
+            fetch('http://127.0.0.1:5000/predict_genre', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(inputData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('predictedGenre').textContent = 'Predicted Genre: ' + data.predicted_genre;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+
+        // Toggle input fields based on selected input method
+        document.querySelectorAll('input[name="inputMethod"]').forEach(function(input) {
+            input.addEventListener('change', function() {
+                if (this.value === 'spotify') {
+                    document.getElementById('spotifyInputFields').style.display = 'block';
+                    document.getElementById('manualInputFields').style.display = 'none';
+                } else {
+                    document.getElementById('spotifyInputFields').style.display = 'none';
+                    document.getElementById('manualInputFields').style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
